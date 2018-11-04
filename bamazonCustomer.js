@@ -10,49 +10,80 @@ var connection = mysql.createConnection({
     user: "root",
 
     password: "",
-  database: "bamazon_DB"
+    
+    database: "bamazon_DB"
 });
 
-const chalkAnimation = require('chalk-animation');
+//const chalkAnimation = require('chalk-animation');
  
-chalkAnimation.karaoke("Welcome to Bamazon!");
+//chalkAnimation.karaoke("Welcome to Bamazon!");
 
 
 
-connection.connect(function(err) {
+var vieworBuy = function() {
+  connection.connect(function(err) {
     if (err) throw err;
+    //start();
+    console.log("connecting to Bamazon...");
+    
+  });
 
-    start();
-});
 
-function startPrompt() {
-    inquirer
-      .prompt({
-        name: "productId",
-        type: "list",
-        message: "How can we help you today?",
-        choices: ["View products for sale", "Add a Product", "Enter an ID", "Exit"]
-      })
-      .then(function(answer) {
-        switch (answer.action) {
-          case 'View':
-          viewInven(function(){
-            startPrompt;
-          });
-          break;
+    var table = new Table({
+      head: ['ID', 'Product Name', 'Department', 'Price', 'Stock Quantity']
+    });
 
-          case 'Add':
-          addProd(function() {
-            startPrompt;
-          });
-          break;
+    console.log("BAMAZON INVENTORY: ");
+         console.log("===========================================");
+         for (var i = 0; i < res.length; i++) {
+             table.push([res[i].id, res[i].ProductName, res[i].DepartmentName, res[i].Price.toFixed(2), res[i].StockQuantity]);
+         }
+         console.log("-----------------------------------------------");
 
-          case 'Enter':
-          enterID(function() {
-            startPrompt;
-          });
-          break;
-        }
-      });
 
-    }
+         console.log(table.toString());
+         inquirer.prompt([{
+             name: "productId",
+             type: "input",
+             message: "Hello! What is the product ID you would like to buy?",
+             validate: function(value) {
+                 if (isNaN(value) == false) {
+                     return true;
+                 } else {
+                     return false;
+                 }
+             }
+            }, {
+              name: "Quantity",
+              type: "input",
+              message: "How many of this item would you like to buy?",
+              validate: function(value) {
+                  if (isNaN(value) == false) {
+                      return true;
+                  } else {
+                      return false;
+                  }
+              }
+
+            }]).then(function(answer) {
+              var chosenId = answer.productId - 1
+              var chosenProduct = res[chosenId]
+              var chosenQuantity = answer.Quantity
+              if (chosenQuantity < res[chosenId].StockQuantity) {
+                  console.log("Your total for " + "(" + answer.Quantity + ")" + " - " + res[chosenId].ProductName + " is: " + res[chosenId].Price.toFixed(2) * chosenQuantity);
+                  connection.query("UPDATE products SET ? WHERE ?", [{
+                      StockQuantity: res[chosenId].StockQuantity - chosenQuantity
+                  }, {
+                    id: res[chosenId].id
+                }], function(err, res) {
+                    //console.log(err);
+                    vieworBuy();
+                });
+
+            } else {
+                console.log("Sorry, we are unable to accomodate that quantity. We do have " + res[chosenId].StockQuantity + " in our Inventory.");
+                vieworBuy();
+            }
+        });
+   }
+  
