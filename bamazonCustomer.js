@@ -5,11 +5,11 @@ var Table = require("cli-table");
 var connection = mysql.createConnection({
     host: "localhost",
 
-    port: 3360,
+    port: 3306,
 
     user: "root",
 
-    password: "",
+    password: "P!nkLem0nade$tand",
 
     database: "bamazon_DB"
 });
@@ -33,12 +33,13 @@ var vieworBuy = function () {
         console.log("===========================================");
 
         for (var i = 0; i < res.length; i++) {
-            table.push([res[i].id, res[i].ProductName, res[i].DepartmentName, res[i].Price.toFixed(2), res[i].StockQuantity]);
-        }
+       
+            table.push([res[i].id, res[i].product_name, res[i].department_name, res[i].price.toFixed(2), res[i].stock_quantity]);
+         }
         console.log("-----------------------------------------------");
 
 
-        console.log(table.toString());
+        //console.log(table.toString());
         inquirer.prompt([{
             name: "productId",
             type: "input",
@@ -64,13 +65,13 @@ var vieworBuy = function () {
             }
 
         }]).then(function (answer) {
-            var chosenId = answer.productId - 1
+            var chosenId = answer.product_name - 1
             var chosenProduct = res[chosenId]
             var chosenQuantity = answer.Quantity
-            if (chosenQuantity < res[chosenId].StockQuantity) {
-                console.log("Your total for " + "(" + answer.Quantity + ")" + " - " + res[chosenId].ProductName + " is: " + res[chosenId].Price.toFixed(2) * chosenQuantity);
+            if (chosenQuantity < res[chosenId].stock_quantity) {
+                console.log("Your total for " + "(" + answer.Quantity + ")" + " - " + res[chosenId].product_name + " is: " + res[chosenId].price.toFixed(2) * chosenQuantity);
                 connection.query("UPDATE products SET ? WHERE ?", [{
-                    StockQuantity: res[chosenId].StockQuantity - chosenQuantity
+                    stock_quantity: res[chosenId].stock_quantity - chosenQuantity
                 }, {
                     id: res[chosenId].id
                 }], function (err, res) {
@@ -79,7 +80,7 @@ var vieworBuy = function () {
                 });
 
             } else {
-                console.log("Sorry, we are unable to accomodate that quantity. We do have " + res[chosenId].StockQuantity + " in our Inventory.");
+                console.log("Sorry, we are unable to accomodate that quantity. We do have " + res[chosenId].stock_quantity + " in our Inventory.");
                 vieworBuy();
             }
         });
